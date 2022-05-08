@@ -14,6 +14,7 @@ async function downloadAbyaSubscriptionPage() {
 	try {
 		const site = await axios.get(ABYA_SUBSCRIPTION_PAGE_URL);
 		const fileSystem = fs.promises;
+		const versionControlObject = [];
 
 		if (site.data) {
 			const global = new jsdom.JSDOM(site.data, {
@@ -35,13 +36,19 @@ async function downloadAbyaSubscriptionPage() {
 			}
 
 			// Save version control
-			const versionControlObject = {
+			versionControlObject.push({
 				id: uuid.v4(),
 				name: ABYA_NAME_VERSION,
 				filename: definePathName,
 				url: site.config.url,
 				timestamp: timestamp,
-			};
+			});
+
+			if (fs.existsSync(versionControlPath)) {
+				const versionJSONFile = await fileSystem.readFile(versionControlPath, "utf8");
+				const versionJSON = JSON.parse(versionJSONFile);
+				versionControlObject.push(...versionJSON);
+			}
 
 			// Write to disk
 			await fileSystem.writeFile(definePathName, staticText);
@@ -73,6 +80,7 @@ async function downloadAbyaSubscriptionPage() {
 			console.log("ErrorId:", uuid.v4());
 			console.log("ErrorName:", error.name);
 			console.log("ErrorMesssage:", error.message);
+			console.log("ErrorStack:", error.stack);
 			console.error("ErrorDetails:", error);
 		}
 	}
