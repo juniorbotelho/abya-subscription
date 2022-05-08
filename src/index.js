@@ -6,6 +6,7 @@ const axios = require("axios").default;
 const uuid = require("uuid");
 
 const ABYA_NAME_VERSION = "Orca";
+const ABYA_SUBSCRIPTION_PAGE_ROOT = "https://abya.gfn.la";
 const ABYA_SUBSCRIPTION_PAGE_URL = "https://abya.gfn.la/pt-BR";
 
 downloadAbyaSubscriptionPage();
@@ -17,19 +18,21 @@ async function downloadAbyaSubscriptionPage() {
 		const versionControlObject = [];
 
 		if (site.data) {
-			const global = new jsdom.JSDOM(site.data, {
-				runScripts: "dangerously",
-				cookieJar: new jsdom.CookieJar(),
-				pretendToBeVisual: true,
-				userAgent:
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
-			});
-
-			const staticText = global.window.document.body.innerHTML;
+			const global = new jsdom.JSDOM(site.data);
 			const timestamp = new Date().getTime();
+			const staticText = global.window.document.body.innerHTML;
+			const scriptEl = global.window.document.body.querySelectorAll("script");
 			const staticTempFolder = path.join(__dirname, "temp");
 			const definePathName = path.join(__dirname, "temp", timestamp + ".html");
 			const versionControlPath = path.join(__dirname, "version.json");
+
+			const truthHtml = Array.from(scriptEl).map(function (element) {
+				const scriptWidthValidationHost = ABYA_SUBSCRIPTION_PAGE_ROOT + element.src;
+				console.log(scriptWidthValidationHost);
+				return staticText.replace(element.src, scriptWidthValidationHost);
+			});
+
+			console.log(truthHtml);
 
 			if (!fs.existsSync(staticTempFolder)) {
 				await fileSystem.mkdir(staticTempFolder);
